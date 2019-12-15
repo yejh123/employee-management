@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <context:component-scan base-package="com.yejh" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+    </context:component-scan>
+
+    <!--视图解析器，指定前后缀-->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver" id="internalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!--将在 SpringMVC 上下文中定义一个DefaultServletHttpRequestHandler，
+    它会对进入 DispatcherServlet 的请求进行筛查，
+    如果发现是没有经过映射的请求，就将该请求交由 WEB 应用服务器tomcat默认的 Servlet 处理，
+    如果不是静态资源的请求，才由 DispatcherServlet 继续处理。-->
+    <mvc:default-servlet-handler/>
+    <!--当配置了<mvc:annotation-driven/>后，会自动加载
+    org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping
+    和org.springframework.web.servlet.mvc.annotation.RequestMappingHandlerAdapter-->
+    <!--会将自定义的ConversionService 注册到 Spring MVC 的上下文中-->
+    <mvc:annotation-driven conversion-service="conversionService"/>
+
+    <!--声明类型转换器服务-->
+    <bean id="StringToEmployeeConverter" class="com.yejh.converter.StringToEmployeeConverter"/>
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <ref bean="StringToEmployeeConverter"/>
+            </set>
+        </property>
+
+    </bean>
+
+    <mvc:interceptors>
+        <bean id="FirstHandlerInterceptor" class="com.yejh.interceptor.FirstHandlerInterceptor"/>
+
+    </mvc:interceptors>
+
+    <!--国际化-->
+    <bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+        <property name="basename" value="loginpage.login"></property>
+    </bean>
+
+    <!--SimpleMappingExceptionResolver-->
+    <bean id="simpleMappingExceptionResolver"
+          class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <!-- exceptionAttribute默认值(通过ModelAndView传递给页面)：
+        exception   ->  ${requestScope.exception}
+        public static final String DEFAULT_EXCEPTION_ATTRIBUTE = "exception";
+        -->
+        <property name="exceptionAttribute" value="exception"/>
+        <property name="exceptionMappings">
+            <props>
+                <!--指定发生错误时跳转的页面-->
+                <prop key="java.lang.ArrayIndexOutOfBoundsException">exception</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
